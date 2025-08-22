@@ -1,0 +1,1 @@
+go build -o libzkbtc.so -buildmode=c-shared api.go
