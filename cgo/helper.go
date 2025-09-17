@@ -12,49 +12,21 @@ import (
 	"github.com/lightec-xyz/common/operations"
 )
 
-func NewString(s string) CString {
-	cs := C.CString(s)
-	return CString(*cs)
-}
-
-func parseResponse(res Response) (*operations.Proof, error) {
-	if res.Code == 0 {
-		return nil, errors.New(C.GoString(res.Msg))
-	}
-	proofBytes, err := ParseProof([]byte(C.GoString(res.Proof)))
+func parseRes(res *C.char) (*operations.Proof, error) {
+	goRes := C.GoString(res)
+	var output FFIRes
+	err := json.Unmarshal([]byte(goRes), &output)
 	if err != nil {
 		return nil, err
 	}
-	witnessBytes, err := ParseWitness([]byte(C.GoString(res.Witness)))
+	if output.Code == 0 {
+		return nil, errors.New(output.Err)
+	}
+	proofBytes, err := ParseProof([]byte(output.Proof))
 	if err != nil {
 		return nil, err
 	}
-	return &operations.Proof{
-		Proof:   proofBytes,
-		Witness: witnessBytes,
-	}, nil
-
-}
-
-func ParseFfiRes(res []byte) (*operations.Proof, error) {
-	var resp FFIRes
-	err := json.Unmarshal(res, &resp)
-	if err != nil {
-		return nil, err
-	}
-	if resp.Code == 0 {
-		return nil, errors.New(resp.Err)
-	}
-	var proof Proof
-	err = json.Unmarshal([]byte(resp.Data), &proof)
-	if err != nil {
-		return nil, err
-	}
-	proofBytes, err := ParseProof([]byte(proof.Proof))
-	if err != nil {
-		return nil, err
-	}
-	witnessBytes, err := ParseWitness([]byte(proof.Witness))
+	witnessBytes, err := ParseWitness([]byte(output.Witness))
 	if err != nil {
 		return nil, err
 	}

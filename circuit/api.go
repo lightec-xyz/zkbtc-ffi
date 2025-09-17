@@ -1,24 +1,5 @@
 package main
 
-/*
-#include <stdlib.h>
-typedef struct {
-    int Code;
-	char* Msg;
-    char* Proof;
-    char* Witness;
-} Response;
-typedef struct {
-    int id;
-    char* name;
-    int age;
-} BtcBaseReq;
-typedef struct {
-    int id;
-    char* name;
-    int age;
-} BtcMiddleReq;
-*/
 import "C"
 import (
 	"bytes"
@@ -34,68 +15,67 @@ import (
 )
 
 //export BtcBaseProve
-func BtcBaseProve(path *C.char, req *C.BtcBaseReq) C.Response {
+func BtcBaseProve(path *C.char, req *C.char) *C.char {
 	setupDir := C.GoString(path)
-	proofData := &blockchainUtil.BaseLevelProofData{}
-	fmt.Printf("btcBaseProve setupDir: %v\n", setupDir)
+	param := C.GoString(req)
+	var data blockchainUtil.BaseLevelProofData
+	err := ToObj(param, &data)
+	if err != nil {
+		return ErrResp(err)
+	}
+	fmt.Printf("btcBaseProve setupDir: %v %v \n", setupDir, param)
 	return ErrResp(errors.New("not implemented"))
-	resp, err := baselevel.Prove(setupDir, proofData)
+	resp, err := baselevel.Prove(setupDir, &data)
 	if err != nil {
 		return ErrResp(err)
 	}
-	proof, witness, err := ProofToStr(resp)
-	if err != nil {
-		return ErrResp(err)
-	}
-	return OKResp(proof, witness)
-}
-
-//export BtcMiddleProve
-func BtcMiddleProve(req C.BtcMiddleReq) C.Response {
-	name := C.GoString(req.name)
-	fmt.Printf("btcMiddleProve name: %v\n", name)
-	return OKResp("OK", "")
+	return OKResp(resp)
 }
 
 func main() {}
 
-func ParseObj(data []byte, dst interface{}) error {
-	if reflect.ValueOf(dst).Kind() != reflect.Ptr {
+func ToObj(s string, obj interface{}) error {
+	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
 		return fmt.Errorf("dst must be a pointer")
 	}
-	err := json.Unmarshal(data, dst)
+	return json.Unmarshal([]byte(s), obj)
+}
+
+func ToJson(obj interface{}) (string, error) {
+	b, err := json.Marshal(obj)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
-}
-
-func ErrResp(err error) C.Response {
-	return C.Response{
-		Code: 0,
-		Msg:  C.CString(fmt.Sprintf("cgo error: %s", err.Error())),
-	}
-
-}
-
-func OKResp(proof, witness string) C.Response {
-	return C.Response{
-		Code:    1,
-		Msg:     C.CString("OK"),
-		Proof:   C.CString(proof),
-		Witness: C.CString(witness),
-	}
+	return string(b), nil
 }
 
 type FFIRes struct {
-	Data string `json:"data"`
-	Err  string `json:"err"`
-	Code int    `json:"code"`
+	Proof   string `json:"proof"`
+	Witness string `json:"witness"`
+	Err     string `json:"err"`
+	Code    int    `json:"code"`
 }
 
-type HexProof struct {
-	Proof   string // hex
-	Witness string
+func ErrResp(err error) *C.char {
+	res, _ := ToJson(FFIRes{
+		Code: 0,
+		Err:  err.Error(),
+	})
+	return C.CString(res)
+
+}
+
+func OKResp(proof *operations.Proof) *C.char {
+	p, w, err := ProofToStr(proof)
+	if err != nil {
+		return ErrResp(err)
+	}
+	res, _ := ToJson(FFIRes{
+		Code:    1,
+		Proof:   p,
+		Witness: w,
+	})
+	return C.CString(res)
 }
 
 func ProofToStr(proof *operations.Proof) (string, string, error) {

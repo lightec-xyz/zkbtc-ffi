@@ -19,27 +19,6 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
-#line 3 "api.go"
-
-#include <stdlib.h>
-typedef struct {
-    int Code;
-	char* Msg;
-    char* Proof;
-    char* Witness;
-} Response;
-typedef struct {
-    int id;
-    char* name;
-    int age;
-} BtcBaseReq;
-typedef struct {
-    int id;
-    char* name;
-    int age;
-} BtcMiddleReq;
-
-#line 1 "cgo-generated-wrapper"
 
 
 /* End of preamble from import "C" comments.  */
@@ -95,8 +74,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern Response BtcBaseProve(char* path, BtcBaseReq* req);
-extern Response BtcMiddleProve(BtcMiddleReq req);
+extern char* BtcBaseProve(char* path, char* req);
 
 #ifdef __cplusplus
 }

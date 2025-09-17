@@ -1,10 +1,8 @@
 package main
 
+import "C"
 import (
-	"encoding/json"
-	"fmt"
 	"os"
-	"reflect"
 )
 
 func GetBtcUrl() (string, string, string) {
