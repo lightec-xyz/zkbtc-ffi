@@ -4,7 +4,6 @@ import "C"
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	native_plonk "github.com/consensys/gnark/backend/plonk"
 	"github.com/consensys/gnark/backend/witness"
@@ -24,7 +23,6 @@ func BtcBaseProve(path *C.char, req *C.char) *C.char {
 		return ErrResp(err)
 	}
 	fmt.Printf("btcBaseProve setupDir: %v %v \n", setupDir, param)
-	return ErrResp(errors.New("not implemented"))
 	resp, err := baselevel.Prove(setupDir, &data)
 	if err != nil {
 		return ErrResp(err)
